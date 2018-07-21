@@ -19,7 +19,7 @@ class States(Enum):
     DISARMING = 5
 
 
-EDGE_LENGTH = 3.0
+EDGE_LENGTH = 10.0
 ALTITUDE = 3.0
 
 
@@ -55,12 +55,12 @@ class BackyardFlyer(Drone):
                 np.array([self.local_position[0], self.local_position[1]]) -
                 np.array([self.target_position[0], self.target_position[1]])
             )
-            # print("DIST:", dist, 0.05 * EDGE_LENGTH)
-            # print("local", self.local_position)
-            # print("target", self.target_position)
             if dist < 0.1 * EDGE_LENGTH:
-                print("TIME TO MOVE")
-                self.waypoint_transition()
+                if(self.current_waypoint < 3):
+                    self.waypoint_transition()
+                else:
+                    if np.linalg.norm(self.local_velocity[0:2]) < 1.0:
+                        self.landing_transition()
 
     def velocity_callback(self):
         if self.flight_state == States.LANDING:
@@ -114,20 +114,15 @@ class BackyardFlyer(Drone):
         self.takeoff(ALTITUDE)
 
     def waypoint_transition(self):
-        """TODO: Fill out this method
-
+        """
         1. Command the next waypoint position
         2. Transition to WAYPOINT state
         """
         print("waypoint transition")
-        if(self.current_waypoint < 3):
-            self.flight_state = States.WAYPOINT
-            self.current_waypoint = self.current_waypoint + 1
-            self.target_position = self.all_waypoints[self.current_waypoint]
-            self.cmd_position(*self.target_position, 0)
-        else:
-            self.flight_state = States.LANDING
-            self.landing_transition()
+        self.flight_state = States.WAYPOINT
+        self.current_waypoint = self.current_waypoint + 1
+        self.target_position = self.all_waypoints[self.current_waypoint]
+        self.cmd_position(*self.target_position, 0)
 
     def landing_transition(self):
         """
